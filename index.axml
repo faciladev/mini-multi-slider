@@ -1,0 +1,32 @@
+<view 
+  style="width:{{sliderWidth}}px;height:3px;background-color:{{sliderColor}};
+  position:relative;margin:0 auto;"
+  >
+
+  <view
+    style="height:3px;width:{{rangeWidth}};margin-left:{{leftRangeMargin}}px;
+    position:absolute;top:0;display:flex;justify-content:space-between;align-items:center;
+    margin-right:{{rightRangeMargin}}px;background-color:{{selectedColor}}"
+    >
+    <view
+      onTouchStart="onTouchStart" 
+      onTouchMove="onTouchMove"
+      onTouchEnd="onTouchEnd"
+      onTouchCancel="onTouchCancel" 
+      data-sliderSide="left"
+      style="width:{{buttonSize}}px;height:{{buttonSize}}px;border:1px thin lightgray;
+      border-radius:100%;background-color:white;box-shadow:0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+      ">
+    </view>
+    <view
+      onTouchStart="onTouchStart" 
+      onTouchMove="onTouchMove"
+      onTouchEnd="onTouchEnd"
+      onTouchCancel="onTouchCancel" 
+      data-sliderSide="right"
+      style="width:{{buttonSize}}px;height:{{buttonSize}}px;border:1px thin lightgray;
+      border-radius:100%;background-color:white;box-shadow:0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+      ">
+    </view>
+  </view>
+</view>
