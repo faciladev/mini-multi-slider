@@ -24,9 +24,7 @@ Component({
       onToCallback: null
     },
     onInit() {
-    },
-    didMount() {
-      
+       
       //Initial input validation
       if(isNaN(this.props.from) || isNaN(this.props.to)){
         throw new Error("'from' or/and 'to' values are not numbers.");
@@ -35,21 +33,34 @@ Component({
         typeof(this.props.onToCallback) !== "function"){
         throw new Error("'onFromCallback' or/and 'onToCallback' values are not functions.");
       }
-  
-      this.setData({
-        sliderWidth: this.props.sliderWidth || this.data.sliderWidth,
-        rangeWidth: this.props.sliderWidth || this.data.sliderWidth,
-        buttonSize: this.props.buttonSize || this.data.buttonSize,
-        from: this.props.from || this.data.from,
-        to: this.props.to || this.data.to,
-        sliderColor: this.props.sliderColor || this.data.sliderColor,
-        selectedColor: this.props.selectedColor || this.data.selectedColor,
-      });
+      if(isNaN(this.props.sliderWidth)){
+        throw new Error("'sliderWidth' is not a numbers.");
+      }
+      
+    },
+    didMount() {
+     my.getSystemInfo()
+        .then(res => {
+          const ratio = res.screenWidth / 750;
+          //convert rpx to px
+          const sliderWidth = ratio * this.props.sliderWidth;
+          this.setData({
+            sliderWidth,
+            rangeWidth: sliderWidth,
+            buttonSize: this.props.buttonSize || this.data.buttonSize,
+            from: this.props.from || this.data.from,
+            to: this.props.to || this.data.to,
+            sliderColor: this.props.sliderColor || this.data.sliderColor,
+            selectedColor: this.props.selectedColor || this.data.selectedColor,
+          });
+        } 
+      );
     },
     didUpdate() {},
     didUnmount() {},
     methods: {
       onTouchStart(e){
+        
         //set starting button position and button type
         const startXPos = parseInt(e.changedTouches[0].clientX);
         const sliderSide = e.target.dataset.sliderSide;
