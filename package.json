@@ -1,6 +1,6 @@
 {
   "name": "mini-multi-slider",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Multi slider component for Mini Program applications.\u001b[B\u001b[B",
   "main": "index.js",
   "scripts": {
