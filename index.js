@@ -1,6 +1,6 @@
 Component({
     data: { 
-      sliderWidth: 300,
+      sliderWidth: null,
       rangeWidth: null,
       leftRangeMargin: 0,
       rightRangeMargin: 0,
@@ -20,30 +20,30 @@ Component({
       to: null,
       sliderColor: null,
       selectedColor: null,
-      onFromCallback: null,
-      onToCallback: null
+      onTouchMove: (e) => {},
+      onTouchCancel: (e) => {},
+      onChangeValue: null
     },
     onInit() {
-       
       //Initial input validation
       if(isNaN(this.props.from) || isNaN(this.props.to)){
         throw new Error("'from' or/and 'to' values are not numbers.");
       }
-      if(typeof(this.props.onFromCallback) !== "function" || 
-        typeof(this.props.onToCallback) !== "function"){
-        throw new Error("'onFromCallback' or/and 'onToCallback' values are not functions.");
+      if(typeof(this.props.onChangeValue) !== "function" || 
+        typeof(this.props.onTouchMove) !== "function" || 
+        typeof(this.props.onTouchCancel) !== "function"){
+        throw new Error("One or more callback props are not functions.");
       }
       if(isNaN(this.props.sliderWidth)){
-        throw new Error("'sliderWidth' is not a numbers.");
+        throw new Error("'sliderWidth' is not a number.");
       }
-      
     },
     didMount() {
      my.getSystemInfo()
         .then(res => {
           const ratio = res.screenWidth / 750;
           //convert rpx to px
-          const sliderWidth = ratio * this.props.sliderWidth;
+          const sliderWidth = parseInt(ratio * this.props.sliderWidth);
           this.setData({
             sliderWidth,
             rangeWidth: sliderWidth,
@@ -56,20 +56,44 @@ Component({
         } 
       );
     },
-    didUpdate() {},
-    didUnmount() {},
     methods: {
       onTouchStart(e){
-        
         //set starting button position and button type
         const startXPos = parseInt(e.changedTouches[0].clientX);
         const sliderSide = e.target.dataset.sliderSide;
         this.setData({startXPos, sliderSide});
       },
       onTouchMove(e){
+        this.props.onTouchMove(e);
       },
-      getTotalRangeWidth(rangeWidth, leftRangeMargin, rightRangeMargin){
-        return rangeWidth + leftRangeMargin + rightRangeMargin;
+      onTouchCancel(e){
+        this.props.onTouchCancel(e);
+      },
+      onTouchEnd(e){
+        const startXPos = this.data.startXPos;
+        const endXPos = parseInt(e.changedTouches[0].clientX);
+        const sliderSide = this.data.sliderSide;
+        //Determin move direction for both left and right buttons
+        if(sliderSide === "left"){
+          if(endXPos > startXPos){
+            this.leftBtnMoveRight(endXPos - startXPos);
+          } else if(endXPos < startXPos){
+            this.leftBtnMoveLeft(startXPos - endXPos);
+          } else {
+            //Button didn't move so do nothing
+          }
+        } else if(sliderSide === "right") {
+          if(endXPos > startXPos){
+            this.rightBtnMoveRight(endXPos - startXPos);
+          } else if(endXPos < startXPos){
+            this.rightBtnMoveLeft(startXPos - endXPos);
+          } else {
+            //Button didn't move so do nothing
+          }
+        } else {
+            throw new Error("Slider buttons aren't properly configured.");
+        }
+        this.runCallback();
       },
       plusRangeWidth(pixels){
         return this.data.rangeWidth + pixels;
@@ -92,7 +116,7 @@ Component({
         return Math.abs(this.data.rightRangeMargin - pixels);
       },
       updateRangeValues(rangeWidth, leftRangeMargin, rightRangeMargin){
-        const totalRangeWidth = this.getTotalRangeWidth(rangeWidth, leftRangeMargin, rightRangeMargin);
+        const totalRangeWidth = rangeWidth + leftRangeMargin + rightRangeMargin;
         if(totalRangeWidth === this.data.sliderWidth){
           if(this.data.sliderSide === "left"){
             this.setData({
@@ -121,11 +145,9 @@ Component({
           } else {
             console.error("Shouldn't be reached.");
           }
-          
         } else {
           console.error("Shouldn't be reached.");
         }
-        
       },
       leftBtnMoveRight(pixels){
         const newRangeWidth = this.minusRangeWidth(pixels);
@@ -140,7 +162,6 @@ Component({
       rightBtnMoveRight(pixels){
         const newRangeWidth = this.plusRangeWidth(pixels);
         const newRightRangeMargin = this.minusRightRangeMargin(pixels);
-        
         this.updateRangeValues(newRangeWidth, this.data.leftRangeMargin, newRightRangeMargin);
       },
       rightBtnMoveLeft(pixels){
@@ -148,7 +169,7 @@ Component({
         const newRightRangeMargin = this.plusRightRangeMargin(pixels);
         this.updateRangeValues(newRangeWidth, this.data.leftRangeMargin, newRightRangeMargin);
       },
-      runCallback(which){
+      runCallback(){
         //Calculate range edge values
         const totalRangeSize = this.data.to - this.data.from;
         const leftMargin = this.data.leftRangeMargin;
@@ -157,43 +178,8 @@ Component({
         const leftVal = parseInt((leftMargin * totalRangeSize) / sliderWidth) + this.data.from;
         const sliderWidthMinusRightMargin = sliderWidth - rightMargin;
         const rightVal = parseInt((sliderWidthMinusRightMargin * totalRangeSize) / sliderWidth) + this.data.from;
-        if(which === "from"){
-          this.props.onFromCallback(leftVal);
-        } else if(which === "to") {
-          this.props.onToCallback(rightVal);
-        } else {
-          console.error("Shouldn't be reached.");
-        }
+        this.props.onChangeValue(leftVal, rightVal);
       },
-      onTouchEnd(e){
-        const startXPos = this.data.startXPos;
-        const endXPos = parseInt(e.changedTouches[0].clientX);
-        const sliderSide = this.data.sliderSide;
-  
-        //Determin move direction for both left and right buttons
-        if(sliderSide === "left"){
-          if(endXPos > startXPos){
-            this.leftBtnMoveRight(endXPos - startXPos);
-          } else if(endXPos < startXPos){
-            this.leftBtnMoveLeft(startXPos - endXPos);
-          } else {
-            //Button didn't move so do nothing
-          }
-          //Update range values
-          this.runCallback("from");
-        } else if(sliderSide === "right") {
-          if(endXPos > startXPos){
-            this.rightBtnMoveRight(endXPos - startXPos);
-          } else if(endXPos < startXPos){
-            this.rightBtnMoveLeft(startXPos - endXPos);
-          } else {
-            //Button didn't move so do nothing
-          }
-          this.runCallback("to");
-        }
-      },
-      onTouchCancel(e){
-      }
     }
   });
   
